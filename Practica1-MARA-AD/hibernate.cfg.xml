@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/XML/XMLDocument.xml to edit this template
+-->
+
+<hibernate-configuration>
+    <session-factory>
+        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/ad_practica1</property>
+        <property name="hibernate.connection.username">2dam</property>
+        <property name="hibernate.connection.password">2dam</property>
+    </session-factory>
+</hibernate-configuration>
