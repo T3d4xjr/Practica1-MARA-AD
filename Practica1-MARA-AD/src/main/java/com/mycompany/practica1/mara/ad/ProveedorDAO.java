@@ -41,7 +41,7 @@ public class ProveedorDAO {
         Transaction transaction = session.beginTransaction();
 
         try {
-            
+
             Proveedor proveedor = new Proveedor(nombre, email, cif);
             proveedor.setId(id);
             session.merge(proveedor);
@@ -54,6 +54,7 @@ public class ProveedorDAO {
         }
 
     }
+
     public static void borrarProveedor(int id) {
         Session session = Conexion.getSession();
         Transaction transaction = session.beginTransaction();
@@ -62,7 +63,7 @@ public class ProveedorDAO {
             Proveedor proveedor = session.get(Proveedor.class, id);
             if (proveedor == null) {
                 System.out.println("Proveedor no encontrado.");
-                throw  new Exception("Proveedor no encontrado.");
+                throw new Exception("Proveedor no encontrado.");
             }
 
             List<Actividad> actividades = proveedor.getActividadList();
@@ -71,13 +72,12 @@ public class ProveedorDAO {
             for (Actividad actividad : actividades) {
                 if (actividad.getFecha().compareTo(fechaActual) > 0) {
                     System.out.println("No se puede borrar el proveedor porque tiene actividades pendientes.");
-                    throw  new Exception("No se puede borrar el proveedor porque tiene actividades pendientes.");
+                    throw new Exception("No se puede borrar el proveedor porque tiene actividades pendientes.");
 
                 }
             }
             session.remove(proveedor);
 
-            
             transaction.commit();
             System.out.println("Proveedor y sus actividades asociadas eliminados correctamente.");
         } catch (Exception e) {
@@ -87,12 +87,9 @@ public class ProveedorDAO {
             session.close();
         }
     }
-    
-    public Proveedor listarDetallesProveedor(int id) {
-        Session session = Conexion.getSession();
-        Transaction transaction = session.beginTransaction();
 
-        try {
+    public static void listarDetallesProveedor(int id) {
+        try (Session session = Conexion.getSession()) {
             Proveedor proveedor = session.get(Proveedor.class, id);
             System.out.println("Id proveedor: " + proveedor.getId());
             System.out.println("Nombre: " + proveedor.getNombre());
@@ -103,20 +100,15 @@ public class ProveedorDAO {
             List<Actividad> actividads = proveedor.getActividadList();
 
             for (Actividad actividad : actividads) {
+                System.out.println("---------------------------");
                 System.out.println("Id actividad: " + actividad.getId());
                 System.out.println("Nombre: " + actividad.getNombre());
                 System.out.println("Fecha: " + actividad.getFecha());
                 System.out.println("Ubicacion: " + actividad.getUbicacion());
                 System.out.println("Plazas disponibles: " + actividad.getPlazasDisponibles());
             }
-
-            transaction.commit();
         } catch (Exception e) {
-            transaction.rollback();
-        } finally {
-            session.close();
         }
-        return null;
     }
 
 }

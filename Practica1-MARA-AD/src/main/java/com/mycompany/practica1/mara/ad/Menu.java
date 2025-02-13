@@ -17,13 +17,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Menu {
-    
+
     public static Scanner scanner = new Scanner(System.in);
-    public static ProveedorDAO proveedorDAO = new ProveedorDAO();
-    public static ActividadDAO actividadDAO = new ActividadDAO();
-    public static ClienteDAO clienteDAO = new ClienteDAO();
-    public static CompraDAO compraDAO = new CompraDAO();
-    
+
     public static void main(String[] args) {
         boolean menu = true;
 
@@ -148,8 +144,7 @@ public class Menu {
             scanner.nextLine(); // Limpiar buffer
             System.out.println("CIF del proveedor: ");
             String cifProveedor = scanner.nextLine();
-            
-            
+
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             Date fechaa = sdf.parse(fecha);
             ActividadDAO.anadirActividad(nombre, fechaa, ubicacion, plazas, cifProveedor);
@@ -170,9 +165,9 @@ public class Menu {
         String nombre = scanner.nextLine();
         System.out.println("Email del cliente: ");
         String email = scanner.nextLine();
-        
+
         ClienteDAO.anadirCliente(nombre, email);
-        
+
     }
 
     private static void modificarCliente() {
@@ -213,18 +208,41 @@ public class Menu {
     }
 
     private static void listarClientes() {
-        clienteDAO.listarClientes();
+        List<Cliente> clientes = ClienteDAO.listarClientes();
+        if (clientes.isEmpty()) {
+            System.err.println("Error al mostrar los clientes");
+        } else {
+            System.out.println("ID,Nombre,Email");
+            for (Cliente cliente : clientes) {
+                System.out.println(cliente.getId()
+                        + "," + cliente.getNombre()
+                        + "," + cliente.getEmail());
+            }
+        }
     }
 
     private static void listarActividadesFuturas() {
-        actividadDAO.listarActividadesFuturas();
+        List<Actividad> actividads = ActividadDAO.listarActividadesFuturas();
+
+        if (actividads.isEmpty()) {
+            System.err.println("Error al mostrar los actividadesFuturas");
+        } else {
+            for (Actividad actividad : actividads) {
+                System.out.println("---------------------------");
+                System.out.println("Nombre: " + actividad.getNombre());
+                System.out.println("Fecha: " + actividad.getFecha());
+                System.out.println("Ubicacion: " + actividad.getUbicacion());
+                System.out.println("Plazas disponibles: " + actividad.getPlazasDisponibles());
+                System.out.println("Nombre proveedor: " + actividad.getIdProveedor().getNombre());
+            }
+        }
     }
 
     private static void listarDetallesCliente() {
         System.out.println("ID del cliente: ");
         int id = scanner.nextInt();
 
-        Cliente cliente = clienteDAO.listarDetallesCliente(id);
+        ClienteDAO.listarDetallesCliente(id);
 
     }
 
@@ -232,14 +250,15 @@ public class Menu {
         System.out.println("ID del proveedor: ");
         int id = scanner.nextInt();
 
-        Proveedor proveedor = proveedorDAO.listarDetallesProveedor(id);
+        ProveedorDAO.listarDetallesProveedor(id);
+
     }
 
     private static void listarDetallesActividad() {
         System.out.println("ID de la actividad: ");
         int id = scanner.nextInt();
 
-        Actividad actividad = actividadDAO.listarDetallesActividad(id);
+        ActividadDAO.listarDetallesActividad(id);
+
     }
 }
-

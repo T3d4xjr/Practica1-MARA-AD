@@ -17,22 +17,22 @@ import org.hibernate.Transaction;
  * @author tedax
  */
 public class ActividadDAO {
-    
-    public static void anadirActividad(String nombre, Date fechaa, String ubicacion, 
+
+    public static void anadirActividad(String nombre, Date fechaa, String ubicacion,
             int plazas, String cifProveedor) {
 
         Session session = Conexion.getSession();
         Transaction transaction = session.beginTransaction();
 
         try {
-            
+
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             String fecha = sdf.format(fechaa);
-            
+
             Actividad actividad = new Actividad(nombre, fecha, ubicacion, plazas);
 
-            Proveedor proveedor = 
-                    session.createQuery("FROM Proveedor WHERE cif =:cifProveedor",Proveedor.class)
+            Proveedor proveedor
+                    = session.createQuery("FROM Proveedor WHERE cif =:cifProveedor", Proveedor.class)
                             .setParameter("cifProveedor", cifProveedor).uniqueResult();
             actividad.setIdProveedor(proveedor);
             session.persist(actividad);
@@ -41,12 +41,13 @@ public class ActividadDAO {
 
             transaction.commit();
         } catch (Exception e) {
-            System.out.println("ERROR:" +e.getMessage());
+            System.out.println("ERROR:" + e.getMessage());
             transaction.rollback();
         } finally {
             session.close();
         }
     }
+
     public static void borrarActividad(int id) {
         Session session = Conexion.getSession();
         Transaction transaction = session.beginTransaction();
@@ -57,7 +58,7 @@ public class ActividadDAO {
                 System.out.println("Actividad no encontrada.");
                 throw new Exception("Actividad no encontrada.");
             }
-            
+
             session.remove(actividad);
 
             transaction.commit();
@@ -70,11 +71,9 @@ public class ActividadDAO {
             session.close();
         }
     }
-    public Actividad listarDetallesActividad(int id) {
-        Session session = Conexion.getSession();
-        Transaction transaction = session.beginTransaction();
 
-        try {
+    public static void listarDetallesActividad(int id) {
+        try (Session session = Conexion.getSession()) {
             Actividad actividad = session.get(Actividad.class, id);
             System.out.println("Nombre: " + actividad.getNombre());
             System.out.println("Fecha: " + actividad.getFecha());
@@ -84,9 +83,7 @@ public class ActividadDAO {
             System.out.println("Id proveedor: " + actividad.getIdProveedor().getId());
             System.out.println("Nombre: " + actividad.getIdProveedor().getNombre());
 
-            List<Compra> compras = actividad.getCompraList();
-
-            for (Compra compra : compras) {
+            for (Compra compra : actividad.getCompraList()) {
                 System.out.println("---------------------------");
                 System.out.println("ID cliente: " + compra.getIdCliente().getId());
                 System.out.println("Nombre: " + compra.getIdCliente().getNombre());
@@ -95,38 +92,21 @@ public class ActividadDAO {
 
             }
 
-            transaction.commit();
         } catch (Exception e) {
-            transaction.rollback();
-        } finally {
-            session.close();
+            e.printStackTrace();
         }
-        return null;
 
     }
 
-    public void listarActividadesFuturas() {
-        Session session = Conexion.getSession();
-        Transaction transaction = session.beginTransaction();
-
-        try {
+    public static List<Actividad> listarActividadesFuturas() {
+        try (Session session = Conexion.getSession()) {
             String fechaActual = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             List<Actividad> actividads = session.createQuery("FROM Actividad WHERE fecha >:fechaActual ", Actividad.class)
                     .setParameter("fechaActual", fechaActual).getResultList();
-            for (Actividad actividad : actividads) {
-                System.out.println("---------------------------");
-                System.out.println("Nombre: " + actividad.getNombre());
-                System.out.println("Fecha: " + actividad.getFecha());
-                System.out.println("Ubicacion: " + actividad.getUbicacion());
-                System.out.println("Plazas disponibles: " + actividad.getPlazasDisponibles());
-                System.out.println("Nombre proveedor: " + actividad.getIdProveedor().getNombre());
-            }
-
-            transaction.commit();
+            System.out.println("WHERE :fechaActual BETWEEN fechaInicio an");
+            return actividads;
         } catch (Exception e) {
-            transaction.rollback();
-        } finally {
-            session.close();
+            return null;
         }
     }
 

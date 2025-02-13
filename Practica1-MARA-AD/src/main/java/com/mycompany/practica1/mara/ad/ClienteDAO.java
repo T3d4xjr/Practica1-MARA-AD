@@ -4,6 +4,7 @@
  */
 package com.mycompany.practica1.mara.ad;
 
+import jakarta.persistence.Query;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -21,13 +22,21 @@ public class ClienteDAO {
         Transaction transaction = session.beginTransaction();
 
         try {
+            Cliente cliente = session.createQuery("FROM Cliente WHERE email =:email ", Cliente.class)
+                    .setParameter("email", email).getSingleResult();
+            if (cliente != null) {
+                System.out.println("Cliente con email existente");
+                throw new Exception("Cliente con email existente");
+            }
 
-            Cliente cliente = new Cliente(nombre, email);
+            Cliente clienteañadir = new Cliente(nombre, email);
 
-            if (cliente == null) {
+            if (clienteañadir == null) {
                 throw new Exception("Cliente no añadido");
             }
-            session.persist(cliente);
+
+            session.persist(clienteañadir);
+
             System.out.println("Cliente añadido con ID:" + cliente.getId());
 
             transaction.commit();
@@ -56,33 +65,33 @@ public class ClienteDAO {
             session.close();
         }
     }
-    
+
     public static void borrarCliente(int id) {
 
         Session session = Conexion.getSession();
         Transaction transaction = session.beginTransaction();
 
         try {
-            Cliente cliente =session.get(Cliente.class, id);
+            Cliente cliente = session.get(Cliente.class, id);
             if (cliente == null) {
                 System.out.println("Cliente no encontrada.");
-                throw  new Exception("Cliente no encontrada.");
+                throw new Exception("Cliente no encontrada.");
             }
-            List<Compra>compras =cliente.getCompraList();
-            
+            List<Compra> compras = cliente.getCompraList();
+
             for (Compra compra : compras) {
-                
-                Actividad actividad =compra.getIdActividad();
-                
+
+                Actividad actividad = compra.getIdActividad();
+
                 String fechaActual = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                 if (actividad.getFecha().compareTo(fechaActual) > 0) {
                     System.out.println("No se puede borrar el cliente porque tiene actividades pendientes.");
                     throw new Exception("No se puede borrar el cliente porque tiene actividades pendientes.");
                 }
-                session.remove(cliente);
-                
+
             }
 
+            session.remove(cliente);
             transaction.commit();
             System.out.println("Actividad y sus compras asociadas eliminadas correctamente.");
         } catch (Exception e) {
@@ -93,20 +102,30 @@ public class ClienteDAO {
         }
 
     }
-    
-    public Cliente listarDetallesCliente(int id) {
-        Session session = Conexion.getSession();
-        Transaction transaction = session.beginTransaction();
 
-        try {
+    public static List<Cliente> listarClientes() {
+        try (Session session = Conexion.getSession()) {
+
+            List<Cliente> clientes = session.createQuery("FROM Cliente", Cliente.class).getResultList();
+
+            return clientes;
+        } catch (Exception e) {
+            return null;
+        }
+
+    }
+
+    public static void listarDetallesCliente(int id) {
+        try (Session session = Conexion.getSession() // Cierra la sesión después de usarla en el método principal
+                // Abre la sesión
+                ) {
             Cliente cliente = session.get(Cliente.class, id);
+
             System.out.println("Id proveedor: " + cliente.getId());
             System.out.println("Nombre: " + cliente.getNombre());
             System.out.println("Email: " + cliente.getEmail());
-
-            List<Compra> compras = cliente.getCompraList();
-
-            for (Compra compra : compras) {
+            System.out.println("---------------------------");
+            for (Compra compra : cliente.getCompraList()) {
                 System.out.println("---------------------------");
                 System.out.println("ID compra" + compra.getIdActividad().getId());
                 System.out.println("Nombre Actividad: " + compra.getIdActividad().getNombre());
@@ -115,35 +134,8 @@ public class ClienteDAO {
                 System.out.println("Fecha actividad: " + compra.getIdActividad().getFecha());
                 System.out.println("Fecha compra: " + compra.getFechaCompra());
             }
-
-            transaction.commit();
         } catch (Exception e) {
-            transaction.rollback();
-        } finally {
-            session.close();
-        }
-        return null;
-    }
-
-    public void listarClientes() {
-        Session session = Conexion.getSession();
-        Transaction transaction = session.beginTransaction();
-
-        try {
-
-            List<Cliente> clientes = session.createQuery("FROM Cliente", Cliente.class).getResultList();
-
-            for (Cliente cliente : clientes) {
-                System.out.println("ID: " + cliente.getId());
-                System.out.println("Nombre: " + cliente.getNombre());
-                System.out.println("Email: " + cliente.getEmail());
-            }
-
-            transaction.commit();
-        } catch (Exception e) {
-            transaction.rollback();
-        } finally {
-            session.close();
+            e.printStackTrace();
         }
     }
 
