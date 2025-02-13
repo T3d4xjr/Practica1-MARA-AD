@@ -5,6 +5,7 @@
 package com.mycompany.practica1.mara.ad;
 
 import jakarta.persistence.Basic;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -46,7 +47,7 @@ public class Proveedor implements Serializable {
     @Basic(optional = false)
     @Column(name = "cif")
     private String cif;
-    @OneToMany(mappedBy = "idProveedor")
+    @OneToMany(mappedBy = "idProveedor",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Actividad> actividadList;
 
     public Proveedor() {

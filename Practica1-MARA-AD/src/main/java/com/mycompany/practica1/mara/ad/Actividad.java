@@ -5,6 +5,7 @@
 package com.mycompany.practica1.mara.ad;
 
 import jakarta.persistence.Basic;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -56,7 +57,7 @@ public class Actividad implements Serializable {
     @Basic(optional = false)
     @Column(name = "plazas_disponibles")
     private int plazasDisponibles;
-    @OneToMany(mappedBy = "idActividad")
+    @OneToMany(mappedBy = "idActividad",cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Compra> compraList;
     @JoinColumn(name = "id_proveedor", referencedColumnName = "id")
     @ManyToOne
@@ -65,7 +66,7 @@ public class Actividad implements Serializable {
     public Actividad() {
     }
 
-    public Actividad(Integer id) {
+    public Actividad(int id) {
         this.id = id;
     }
 

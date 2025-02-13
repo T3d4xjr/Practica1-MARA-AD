@@ -5,6 +5,7 @@
 package com.mycompany.practica1.mara.ad;
 
 import jakarta.persistence.Basic;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -42,7 +43,7 @@ public class Cliente implements Serializable {
     @Basic(optional = false)
     @Column(name = "email")
     private String email;
-    @OneToMany(mappedBy = "idCliente")
+    @OneToMany(mappedBy = "idCliente", cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Compra> compraList;
 
     public Cliente() {

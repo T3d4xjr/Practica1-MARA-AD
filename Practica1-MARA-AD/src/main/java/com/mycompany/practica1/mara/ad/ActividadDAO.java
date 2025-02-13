@@ -4,7 +4,6 @@
  */
 package com.mycompany.practica1.mara.ad;
 
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -18,7 +17,59 @@ import org.hibernate.Transaction;
  * @author tedax
  */
 public class ActividadDAO {
+    
+    public static void anadirActividad(String nombre, Date fechaa, String ubicacion, 
+            int plazas, String cifProveedor) {
 
+        Session session = Conexion.getSession();
+        Transaction transaction = session.beginTransaction();
+
+        try {
+            
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            String fecha = sdf.format(fechaa);
+            
+            Actividad actividad = new Actividad(nombre, fecha, ubicacion, plazas);
+
+            Proveedor proveedor = 
+                    session.createQuery("FROM Proveedor WHERE cif =:cifProveedor",Proveedor.class)
+                            .setParameter("cifProveedor", cifProveedor).uniqueResult();
+            actividad.setIdProveedor(proveedor);
+            session.persist(actividad);
+
+            System.out.println("Actividad añadido con ID:" + actividad.getId());
+
+            transaction.commit();
+        } catch (Exception e) {
+            System.out.println("ERROR:" +e.getMessage());
+            transaction.rollback();
+        } finally {
+            session.close();
+        }
+    }
+    public static void borrarActividad(int id) {
+        Session session = Conexion.getSession();
+        Transaction transaction = session.beginTransaction();
+
+        try {
+            Actividad actividad = session.get(Actividad.class, id);
+            if (actividad == null) {
+                System.out.println("Actividad no encontrada.");
+                throw new Exception("Actividad no encontrada.");
+            }
+            
+            session.remove(actividad);
+
+            transaction.commit();
+            System.out.println("Actividad y sus compras asociadas eliminadas correctamente.");
+        } catch (Exception e) {
+            transaction.rollback();
+            System.err.println("Error al intentar borrar la actividad: " + e.getMessage());
+        } finally {
+            // Cerrar la sesión
+            session.close();
+        }
+    }
     public Actividad listarDetallesActividad(int id) {
         Session session = Conexion.getSession();
         Transaction transaction = session.beginTransaction();
@@ -77,166 +128,6 @@ public class ActividadDAO {
         } finally {
             session.close();
         }
-    }
-
-    public boolean cancelarCompra(int idActividad, int idCliente) {
-        Session session = Conexion.getSession();
-        Transaction transaction = session.beginTransaction();
-
-        try {
-            Actividad actividad = session.get(Actividad.class, idActividad);
-            if (actividad == null) {
-                System.out.println("Actividad no encontrada.");
-                return false;
-            }
-            String fechaActual = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            if (actividad.getFecha().compareTo(fechaActual) > 0) {
-                System.out.println("No se puede borrar el proveedor porque tiene actividades pendientes.");
-                transaction.rollback();
-                return false;
-            }
-            Compra compra= session.createQuery("FROM Compra WHERE idActividad = :idActividad AND idCliente = :idCliente", Compra.class)
-                    .setParameter("idActividad", idActividad)
-                    .setParameter("idCliente", idCliente).uniqueResult();
-       
-            if (compra == null) {
-                System.out.println("Compra no encontrada para este cliente en la actividad especificada.");
-                return false;
-            }
-
-            session.remove(compra);
-
-            actividad.setPlazasDisponibles(actividad.getPlazasDisponibles() + 1);
-            session.merge(actividad);
-
-            // Confirmar la transacción
-            transaction.commit();
-            System.out.println("Compra cancelada correctamente.");
-            return true;
-        } catch (Exception e) {
-            // Manejar errores y revertir la transacción
-            transaction.rollback();
-            System.err.println("Error al intentar cancelar la compra: " + e.getMessage());
-            return false;
-        } finally {
-            // Cerrar la sesión
-            session.close();
-        }
-    }
-
-    public boolean comprarActividad(int idActividad, int idCliente) {
-        Session session = Conexion.getSession();
-        Transaction transaction = session.beginTransaction();
-
-        try {
-            // Obtener la actividad por ID
-            Actividad actividad = session.get(Actividad.class, idActividad);
-            if (actividad == null) {
-                System.out.println("Actividad no encontrada.");
-                return false;
-            }
-
-            // Validar si la actividad tiene plazas disponibles
-            if (actividad.getPlazasDisponibles() <= 0) {
-                System.out.println("No hay plazas disponibles para esta actividad.");
-                return false;
-            }
-
-            String fechaActual = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            if (actividad.getFecha().compareTo(fechaActual) > 0) {
-                System.out.println("No se puede borrar el proveedor porque tiene actividades pendientes.");
-                transaction.rollback();
-                return false;
-            }
-
-            // Obtener al cliente por ID
-            Cliente cliente = session.get(Cliente.class, idCliente);
-            if (cliente == null) {
-                System.out.println("Cliente no encontrado.");
-                return false;
-            }
-
-            Compra nuevaCompra = new Compra();
-            nuevaCompra.setIdActividad(actividad);
-            nuevaCompra.setIdCliente(cliente);
-            nuevaCompra.setFechaCompra(fechaActual);
-
-            session.persist(nuevaCompra);
-
-            actividad.setPlazasDisponibles(actividad.getPlazasDisponibles() - 1);
-            session.merge(actividad);
-
-            transaction.commit();
-            System.out.println("Compra realizada correctamente.");
-            return true;
-        } catch (Exception e) {
-            // Manejar errores y revertir la transacción
-            transaction.rollback();
-            System.err.println("Error al intentar realizar la compra: " + e.getMessage());
-            return false;
-        } finally {
-            // Cerrar la sesión
-            session.close();
-        }
-    }
-
-    public boolean borrarActividad(int id) {
-        Session session = Conexion.getSession();
-        Transaction transaction = session.beginTransaction();
-
-        try {
-            Actividad actividad = session.get(Actividad.class, id);
-            if (actividad == null) {
-                System.out.println("Actividad no encontrada.");
-                return false;
-            }
-
-            List<Compra> compras = actividad.getCompraList();
-
-            for (Compra compra : compras) {
-                session.remove(compra);
-            }
-
-            session.remove(actividad);
-
-            transaction.commit();
-            System.out.println("Actividad y sus compras asociadas eliminadas correctamente.");
-            return true;
-        } catch (Exception e) {
-            transaction.rollback();
-            System.err.println("Error al intentar borrar la actividad: " + e.getMessage());
-            return false;
-        } finally {
-            // Cerrar la sesión
-            session.close();
-        }
-    }
-
-    public int anadirActividad(String nombre, Date fecha, String ubicacion, int plazas, int idProveedor) {
-
-        Session session = Conexion.getSession();
-        Transaction transaction = session.beginTransaction();
-
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            String fechaa = sdf.format(fecha);
-
-            Actividad actividad = new Actividad(nombre, fechaa, ubicacion, plazas);
-
-            Proveedor proveedor = session.get(Proveedor.class, idProveedor);
-            actividad.setIdProveedor(proveedor);
-            session.persist(actividad);
-
-            System.out.println("Actividad añadido con ID:" + actividad.getId());
-
-            transaction.commit();
-        } catch (Exception e) {
-            transaction.rollback();
-        } finally {
-            session.close();
-        }
-
-        return 1;
     }
 
 }
