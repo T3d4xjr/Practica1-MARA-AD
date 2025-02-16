@@ -25,12 +25,10 @@ public class CompraDAO {
         try {
             Actividad actividad = session.get(Actividad.class, idActividad);
             if (actividad == null) {
-                System.out.println("Actividad no encontrada.");
                 throw new Exception("Actividad no encontrada.");
             }
             Cliente cliente = session.get(Cliente.class, idCliente);
             if (cliente == null) {
-                System.out.println("Cliente no encontrado.");
                 throw new Exception("Cliente no encontrada.");
             }
 
@@ -41,19 +39,16 @@ public class CompraDAO {
             Date fechaActividad = sdf.parse(actividad.getFecha());
             Date fechaHoy = sdf.parse(hoy);
             if (fechaActividad.before(fechaHoy)) {
-
-                System.out.println("No se puede borrar el proveedor porque tiene actividades pendientes.");
                 throw new Exception("No se puede borrar el proveedor porque tiene actividades pendientes.");
             }
 
             Compra compra = session.createQuery(
                     "FROM Compra WHERE idActividad.id = :actividad AND idCliente.id = :cliente", Compra.class)
-                    .setParameter("actividad", idActividad) // Pasamos el objeto Actividad completo
-                    .setParameter("cliente", idCliente) // Pasamos el objeto Cliente completo
+                    .setParameter("actividad", idActividad) 
+                    .setParameter("cliente", idCliente) 
                     .getSingleResult();
 
             if (compra == null) {
-                System.out.println("Compra no encontrada para este cliente en la actividad especificada.");
                 throw new Exception("Compra no encontrada para este cliente en la actividad especificada.");
             }
 
@@ -62,15 +57,12 @@ public class CompraDAO {
             actividad.setPlazasDisponibles(actividad.getPlazasDisponibles() + 1);
             session.merge(actividad);
 
-            // Confirmar la transacción
             transaction.commit();
             System.out.println("Compra cancelada correctamente.");
         } catch (Exception e) {
-            // Manejar errores y revertir la transacción
             transaction.rollback();
             System.err.println("Error al intentar cancelar la compra: " + e.getMessage());
         } finally {
-            // Cerrar la sesión
             session.close();
         }
     }
@@ -82,18 +74,15 @@ public class CompraDAO {
         try {
             Cliente cliente = session.get(Cliente.class, idCliente);
             if (cliente == null) {
-                System.out.println("Cliente no encontrado.");
                 throw new Exception("Cliente no encontrada.");
             }
 
             Actividad actividad = session.get(Actividad.class, idActividad);
             if (actividad == null) {
-                System.out.println("Actividad no encontrada.");
                 throw new Exception("Actividad no encontrada.");
             }
 
             if (actividad.getPlazasDisponibles() <= 0) {
-                System.out.println("No hay plazas disponibles para esta actividad.");
                 throw new Exception("No hay plazas disponibles para esta actividad.");
             }
             LocalDate date = LocalDate.now();
@@ -104,7 +93,6 @@ public class CompraDAO {
             Date fechaHoy = sdf.parse(hoy);
             if (fechaActividad.before(fechaHoy)) {
 
-                System.out.println("No se puede borrar el proveedor porque tiene actividades pendientes.");
                 throw new Exception("No se puede borrar el proveedor porque tiene actividades pendientes.");
             }
 
@@ -126,11 +114,9 @@ public class CompraDAO {
             transaction.commit();
             System.out.println("Compra realizada correctamente.");
         } catch (Exception e) {
-            // Manejar errores y revertir la transacción
             transaction.rollback();
             System.err.println("Error al intentar realizar la compra: " + e.getMessage());
         } finally {
-            // Cerrar la sesión
             session.close();
         }
     }

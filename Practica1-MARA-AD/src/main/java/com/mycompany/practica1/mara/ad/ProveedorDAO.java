@@ -21,19 +21,35 @@ public class ProveedorDAO {
         Transaction transaction = session.beginTransaction();
 
         try {
+            if (nombre == null || nombre.isEmpty() || email == null || email.isEmpty() || cif == null || cif.isEmpty()) {
+                throw new Exception("Los campos nombre, email y CIF no pueden ser nulos ni vacíos");
+            }
+            Proveedor proveedor = session.createQuery("FROM Proveedor WHERE email =:email OR cif =:cif", Proveedor.class)
+                    .setParameter("email", email)
+                    .setParameter("cif", cif)
+                    .uniqueResult();
 
-            Proveedor proveedor = new Proveedor(nombre, email, cif);
-            session.persist(proveedor);
-            System.out.println("Proveedor añadido con ID:" + proveedor.getId());
+            if (proveedor != null) {
+                throw new Exception("Proveedor con email o CIF existente");
+            }
+
+            Proveedor proveedorNuevo = new Proveedor(nombre, email, cif);
+
+            if (proveedorNuevo == null) {
+                throw new Exception("Proveedor no añadido");
+            }
+
+            session.persist(proveedorNuevo);
+
+            System.out.println("Proveedor añadido con ID: " + proveedorNuevo.getId());
 
             transaction.commit();
-            System.out.println("PRoveedor modificado con exito");
         } catch (Exception e) {
+            System.err.println(e.getMessage());
             transaction.rollback();
         } finally {
             session.close();
         }
-
     }
 
     public static void modificarProveedor(int id, String nombre, String email, String cif) {
@@ -41,6 +57,18 @@ public class ProveedorDAO {
         Transaction transaction = session.beginTransaction();
 
         try {
+            if (nombre == null || nombre.isEmpty() || email == null || email.isEmpty() || cif == null || cif.isEmpty()) {
+                throw new Exception("Los campos nombre, email y CIF no pueden ser nulos ni vacíos");
+            }
+
+            Proveedor proveedorExistente = session.createQuery("FROM Proveedor WHERE email =:email OR cif =:cif", Proveedor.class)
+                    .setParameter("email", email)
+                    .setParameter("cif", cif)
+                    .uniqueResult();
+
+            if (proveedorExistente != null) {
+                throw new Exception("Proveedor con email o CIF existente");
+            }
 
             Proveedor proveedor = new Proveedor(nombre, email, cif);
             proveedor.setId(id);
@@ -48,6 +76,7 @@ public class ProveedorDAO {
 
             transaction.commit();
         } catch (Exception e) {
+            System.err.println(e.getMessage());
             transaction.rollback();
         } finally {
             session.close();
@@ -91,23 +120,28 @@ public class ProveedorDAO {
     public static void listarDetallesProveedor(int id) {
         try (Session session = Conexion.getSession()) {
             Proveedor proveedor = session.get(Proveedor.class, id);
-            System.out.println("Id proveedor: " + proveedor.getId());
-            System.out.println("Nombre: " + proveedor.getNombre());
-            System.out.println("Email: " + proveedor.getEmail());
-            System.out.println("Cif: " + proveedor.getCif());
-            System.out.println("---------------------------");
-
-            List<Actividad> actividads = proveedor.getActividadList();
-
-            for (Actividad actividad : actividads) {
+            if (proveedor != null) {
+                System.out.println("Id proveedor: " + proveedor.getId());
+                System.out.println("Nombre: " + proveedor.getNombre());
+                System.out.println("Email: " + proveedor.getEmail());
+                System.out.println("Cif: " + proveedor.getCif());
                 System.out.println("---------------------------");
-                System.out.println("Id actividad: " + actividad.getId());
-                System.out.println("Nombre: " + actividad.getNombre());
-                System.out.println("Fecha: " + actividad.getFecha());
-                System.out.println("Ubicacion: " + actividad.getUbicacion());
-                System.out.println("Plazas disponibles: " + actividad.getPlazasDisponibles());
+
+                List<Actividad> actividads = proveedor.getActividadList();
+
+                for (Actividad actividad : actividads) {
+                    System.out.println("---------------------------");
+                    System.out.println("Id actividad: " + actividad.getId());
+                    System.out.println("Nombre: " + actividad.getNombre());
+                    System.out.println("Fecha: " + actividad.getFecha());
+                    System.out.println("Ubicacion: " + actividad.getUbicacion());
+                    System.out.println("Plazas disponibles: " + actividad.getPlazasDisponibles());
+                }
+
             }
+
         } catch (Exception e) {
+            System.out.println(e.getMessage());
         }
     }
 

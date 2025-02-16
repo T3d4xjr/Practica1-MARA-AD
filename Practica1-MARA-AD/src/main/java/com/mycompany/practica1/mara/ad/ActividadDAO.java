@@ -18,30 +18,38 @@ import org.hibernate.Transaction;
  */
 public class ActividadDAO {
 
-    public static void anadirActividad(String nombre, Date fechaa, String ubicacion,
-            int plazas, String cifProveedor) {
-
+    public static void anadirActividad(String nombre, Date fechaa, String ubicacion, int plazas, String cifProveedor) {
         Session session = Conexion.getSession();
         Transaction transaction = session.beginTransaction();
 
         try {
+            if (nombre == null || nombre.isEmpty() || fechaa == null || ubicacion == null
+                    || ubicacion.isEmpty() || plazas <= 0) {
+                throw new Exception("Los campos nombre, fecha, ubicación, plazas y "
+                        + "no pueden ser nulos ni vacíos, y las plazas deben ser mayores que cero");
+            }
 
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             String fecha = sdf.format(fechaa);
 
             Actividad actividad = new Actividad(nombre, fecha, ubicacion, plazas);
 
-            Proveedor proveedor
-                    = session.createQuery("FROM Proveedor WHERE cif =:cifProveedor", Proveedor.class)
-                            .setParameter("cifProveedor", cifProveedor).uniqueResult();
+            Proveedor proveedor = session.createQuery("FROM Proveedor WHERE cif =:cifProveedor", Proveedor.class)
+                    .setParameter("cifProveedor", cifProveedor)
+                    .uniqueResult();
+
+            if (proveedor == null) {
+                throw new Exception("Proveedor con el CIF especificado no encontrado");
+            }
+
             actividad.setIdProveedor(proveedor);
             session.persist(actividad);
 
-            System.out.println("Actividad añadido con ID:" + actividad.getId());
+            System.out.println("Actividad añadida con ID: " + actividad.getId());
 
             transaction.commit();
         } catch (Exception e) {
-            System.out.println("ERROR:" + e.getMessage());
+            System.out.println(e.getMessage());
             transaction.rollback();
         } finally {
             session.close();
@@ -75,25 +83,28 @@ public class ActividadDAO {
     public static void listarDetallesActividad(int id) {
         try (Session session = Conexion.getSession()) {
             Actividad actividad = session.get(Actividad.class, id);
-            System.out.println("Nombre: " + actividad.getNombre());
-            System.out.println("Fecha: " + actividad.getFecha());
-            System.out.println("Ubicacion: " + actividad.getUbicacion());
-            System.out.println("Plazas disponibles: " + actividad.getPlazasDisponibles());
-            System.out.println("---------------------------");
-            System.out.println("Id proveedor: " + actividad.getIdProveedor().getId());
-            System.out.println("Nombre: " + actividad.getIdProveedor().getNombre());
 
-            for (Compra compra : actividad.getCompraList()) {
+            if (actividad != null) {
+                System.out.println("Nombre: " + actividad.getNombre());
+                System.out.println("Fecha: " + actividad.getFecha());
+                System.out.println("Ubicacion: " + actividad.getUbicacion());
+                System.out.println("Plazas disponibles: " + actividad.getPlazasDisponibles());
                 System.out.println("---------------------------");
-                System.out.println("ID cliente: " + compra.getIdCliente().getId());
-                System.out.println("Nombre: " + compra.getIdCliente().getNombre());
-                System.out.println("Email: " + compra.getIdCliente().getEmail());
-                System.out.println("Fecha compra: " + compra.getFechaCompra());
+                System.out.println("Id proveedor: " + actividad.getIdProveedor().getId());
+                System.out.println("Nombre: " + actividad.getIdProveedor().getNombre());
 
+                for (Compra compra : actividad.getCompraList()) {
+                    System.out.println("---------------------------");
+                    System.out.println("ID cliente: " + compra.getIdCliente().getId());
+                    System.out.println("Nombre: " + compra.getIdCliente().getNombre());
+                    System.out.println("Email: " + compra.getIdCliente().getEmail());
+                    System.out.println("Fecha compra: " + compra.getFechaCompra());
+
+                }
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());;
         }
 
     }

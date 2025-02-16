@@ -22,25 +22,31 @@ public class ClienteDAO {
         Transaction transaction = session.beginTransaction();
 
         try {
-            Cliente cliente = session.createQuery("FROM Cliente WHERE email =:email ", Cliente.class)
-                    .setParameter("email", email).getSingleResult();
-            if (cliente != null) {
-                System.out.println("Cliente con email existente");
+            if (nombre == null || nombre.isEmpty() || email == null || email.isEmpty()) {
+                throw new Exception("Los campos nombre y email no pueden ser nulos ni vacíos");
+            }
+
+            Cliente clienteExistente = session.createQuery("FROM Cliente WHERE email =:email ", Cliente.class)
+                    .setParameter("email", email)
+                    .uniqueResult();
+
+            if (clienteExistente != null) {
                 throw new Exception("Cliente con email existente");
             }
 
-            Cliente clienteañadir = new Cliente(nombre, email);
+            Cliente cliente = new Cliente(nombre, email);
 
-            if (clienteañadir == null) {
+            if (cliente == null) {
                 throw new Exception("Cliente no añadido");
             }
 
-            session.persist(clienteañadir);
+            session.persist(cliente);
 
-            System.out.println("Cliente añadido con ID:" + cliente.getId());
+            System.out.println("Cliente añadido con ID: " + cliente.getId());
 
             transaction.commit();
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             transaction.rollback();
         } finally {
             session.close();
@@ -52,6 +58,17 @@ public class ClienteDAO {
         Transaction transaction = session.beginTransaction();
 
         try {
+            if (nombre == null || nombre.isEmpty() || email == null || email.isEmpty()) {
+                throw new Exception("Los campos nombre y email no pueden ser nulos ni vacíos");
+            }
+
+            Cliente clienteExistente = session.createQuery("FROM Cliente WHERE email =:email ", Cliente.class)
+                    .setParameter("email", email)
+                    .uniqueResult();
+
+            if (clienteExistente != null) {
+                throw new Exception("Cliente con email existente");
+            }
 
             Cliente cliente = new Cliente(nombre, email);
             cliente.setId(id);
@@ -60,6 +77,7 @@ public class ClienteDAO {
             transaction.commit();
             System.out.println("Cliente modificado con exito");
         } catch (Exception e) {
+            System.out.println(e.getMessage());
             transaction.rollback();
         } finally {
             session.close();
@@ -116,26 +134,29 @@ public class ClienteDAO {
     }
 
     public static void listarDetallesCliente(int id) {
-        try (Session session = Conexion.getSession() // Cierra la sesión después de usarla en el método principal
-                // Abre la sesión
-                ) {
+        try (Session session = Conexion.getSession()) {
             Cliente cliente = session.get(Cliente.class, id);
-
-            System.out.println("Id proveedor: " + cliente.getId());
-            System.out.println("Nombre: " + cliente.getNombre());
-            System.out.println("Email: " + cliente.getEmail());
-            System.out.println("---------------------------");
-            for (Compra compra : cliente.getCompraList()) {
+           
+            
+            if (cliente != null) {
+                System.out.println("Id proveedor: " + cliente.getId());
+                System.out.println("Nombre: " + cliente.getNombre());
+                System.out.println("Email: " + cliente.getEmail());
                 System.out.println("---------------------------");
-                System.out.println("ID compra" + compra.getIdActividad().getId());
-                System.out.println("Nombre Actividad: " + compra.getIdActividad().getNombre());
-                System.out.println("Ubicacion: " + compra.getIdActividad().getUbicacion());
-                System.out.println("Nombre Proveedor: " + compra.getIdActividad().getIdProveedor().getNombre());
-                System.out.println("Fecha actividad: " + compra.getIdActividad().getFecha());
-                System.out.println("Fecha compra: " + compra.getFechaCompra());
+                for (Compra compra : cliente.getCompraList()) {
+                    System.out.println("---------------------------");
+                    System.out.println("ID compra" + compra.getIdActividad().getId());
+                    System.out.println("Nombre Actividad: " + compra.getIdActividad().getNombre());
+                    System.out.println("Ubicacion: " + compra.getIdActividad().getUbicacion());
+                    System.out.println("Nombre Proveedor: " + compra.getIdActividad().getIdProveedor().getNombre());
+                    System.out.println("Fecha actividad: " + compra.getIdActividad().getFecha());
+                    System.out.println("Fecha compra: " + compra.getFechaCompra());
+                }
+
             }
+
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
     }
 
